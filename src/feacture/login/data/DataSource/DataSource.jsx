@@ -2,11 +2,11 @@ export class LoginDataSource {
     async login(phone, password) {
         await new Promise(resolve => setTimeout(resolve, 1500));
 
-        if (phone === '123456789' && password === 'password123') {
+        if (phone === 'jaffet' && password === 'password') {
             
             return Promise.resolve({
                 userId: 'user-001',
-                fullName: 'Juan Pérez',
+                fullName: ' Carlos Jaffet',
                 emailAddress: 'juan.perez@example.com',
                 phoneNumber: phone,
                 token: 'fake-jwt-token-for-session-management' // Un token de sesión simulado
