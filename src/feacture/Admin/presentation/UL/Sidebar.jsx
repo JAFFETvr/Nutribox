@@ -1,13 +1,12 @@
 
 const Sidebar = ({ navItems, logoutItem, onLogout, onNavClick, currentPath }) => (
-    <aside className="flex flex-col justify-between w-64 h-screen bg-[#f9a84d] p-4 text-white">
+    <aside className="flex flex-col justify-between w-64 h-screen bg-[#f9a84d] p-4 text-white shrink-0">
         <div>
             <h1 className="text-2xl font-bold p-4">Mi Panel</h1>
             <nav className="mt-6">
                 <ul>
                     {navItems.map((item) => {
                         const isActive = currentPath === item.path;
-
                         return (
                             <li key={item.name}>
                                 <button
