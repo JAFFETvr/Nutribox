@@ -23,8 +23,7 @@ export const useDashboardViewModel = () => {
 
     const handleLogout = () => {
         console.log('Cerrando sesión...');
-        // Aquí podrías limpiar el almacenamiento local o token
-        // localStorage.removeItem('token');
+       
         navigate('/login');
     };
 

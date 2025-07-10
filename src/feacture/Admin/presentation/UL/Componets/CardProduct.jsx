@@ -2,8 +2,9 @@ import React from 'react';
 import { FiTrash2, FiEdit } from 'react-icons/fi';
 
 const ProductCard = ({ id, nombre, image, precio, onDelete, onEdit }) => {
-  const isNaranja = nombre.toLowerCase().includes('naranja');
-  const imageStyles = isNaranja ? 'w-28 -top-24' : 'w-40 -top-10';
+  // CORRECCIÓN: Se define un único estilo para todas las imágenes de los productos.
+  // Esto asegura que todas las imágenes se posicionen correctamente.
+  const imageStyles = 'w-28 -top-24';
 
   const handleDelete = () => {
     // 1. LOG INICIAL: ¿Se activa el click con el ID correcto?
