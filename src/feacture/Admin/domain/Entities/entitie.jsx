@@ -2,7 +2,7 @@ export class NavItem {
     constructor(name, icon, path = '') {
         this.name = name;
         this.icon = icon;
-        this.path = path; // <-- ESTA PROPIEDAD ES ESENCIAL
+        this.path = path; 
     }
 }
 export class User {
