@@ -83,7 +83,7 @@ const LoginView = () => {
 
                 <div className="hidden md:flex md:w-1/2 items-center justify-center p-6">
                     <img
-                        src="/Smoothies.jpg"
+                        src="/Smoothies-Pica.png"
                         alt="Smoothies"
                         className="w-full max-w-sm h-auto object-contain rounded-lg shadow-lg"
                     />

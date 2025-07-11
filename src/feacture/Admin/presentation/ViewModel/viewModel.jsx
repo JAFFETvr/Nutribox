@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import {
     FiUser,
     FiDollarSign,
@@ -22,9 +23,30 @@ export const useDashboardViewModel = () => {
     const logoutItem = new NavItem('Cerrar Sesión', FiLogOut);
 
     const handleLogout = () => {
-        console.log('Cerrando sesión...');
-       
-        navigate('/login');
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "Tu sesión actual se cerrará.",
+            icon: 'warning',
+            iconColor: '#d33',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, cerrar sesión',
+            cancelButtonText: 'Cancelar',
+            
+            // Aplicamos estilos personalizados para coherencia visual
+            customClass: {
+                popup: 'bg-white rounded-xl shadow-lg',
+                title: 'text-gray-800 font-bold text-2xl',
+                confirmButton: 'bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors',
+                cancelButton: 'bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition-colors',
+            },
+            buttonsStyling: false, // Desactivamos estilos por defecto para usar los nuestros
+
+        }).then((result) => {
+            if (result.isConfirmed) {
+                console.log('Cerrando sesión...');
+                navigate('/login');
+            }
+        });
     };
 
     const handleAddItem = () => {
