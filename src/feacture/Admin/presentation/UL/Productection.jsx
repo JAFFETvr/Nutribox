@@ -22,7 +22,7 @@ const InventoryPage = () => {
     <div className="w-full min-h-screen font-sans p-8 bg-gray-50">
       <header className="flex justify-between items-center mb-8">
         <FiFilter className="text-3xl text-gray-800 cursor-pointer" />
-        <h1 className="text-4xl font-bold text-black flex-grow text-center">
+        <h1 className="text-4xl font-bold text-[#2E6C43] flex-grow text-center">
           Inventario
         </h1>
         <button onClick={() => openModal()} aria-label="Añadir producto">

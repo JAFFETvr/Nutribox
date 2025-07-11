@@ -1,5 +1,6 @@
 import React from 'react';
 import { FiTrash2, FiEdit } from 'react-icons/fi';
+import Swal from 'sweetalert2'; 
 
 const ProductCard = ({ id, nombre, image, precio, onDelete, onEdit }) => {
 
@@ -8,10 +9,34 @@ const ProductCard = ({ id, nombre, image, precio, onDelete, onEdit }) => {
   const handleDelete = () => {
     console.log(`%c[ProductCard] 1. Click en eliminar. ID: ${id}`, 'color: red; font-weight: bold;');
     
-    const confirmDelete = window.confirm(`¿Estás seguro de que quieres eliminar "${nombre}"?`);
-    if (confirmDelete) {
-      onDelete(id);
-    }
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: `¡No podrás revertir la eliminación de "${nombre}"!`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, ¡eliminar!',
+      cancelButtonText: 'Cancelar',
+      // Opcional: Estilos para que los botones coincidan con tu tema
+      customClass: {
+        confirmButton: 'px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 font-semibold',
+        cancelButton: 'px-4 py-2 rounded-lg text-gray-700 bg-gray-200 hover:bg-gray-300 font-semibold'
+      },
+      buttonsStyling: false // Desactivar estilos por defecto para usar los de Tailwind
+    }).then((result) => {
+      // 3. Comprobar si el usuario confirmó la acción
+      if (result.isConfirmed) {
+        onDelete(id); // Llamar a la función onDelete solo si se confirma
+        
+        // Opcional: Mostrar una notificación de éxito después de eliminar
+        Swal.fire({
+          title: '¡Eliminado!',
+          text: `El producto "${nombre}" ha sido eliminado.`,
+          icon: 'success',
+          timer: 1500, // Cierra automáticamente después de 1.5 segundos
+          showConfirmButton: false
+        });
+      }
+    });
   };
 
   return (

@@ -47,7 +47,6 @@ export const productApiDataSource = {
 
   async deleteProduct(productId) {
     const url = `${API_BASE_URL}/productos/${productId}`;
-    // Log para depurar: ¿Qué URL exacta se está llamando?
     console.log(`%c[DataSource] Realizando petición DELETE a: ${url}`, 'color: blue; font-weight: bold;');
     
     try {
@@ -61,3 +60,21 @@ export const productApiDataSource = {
     }
   }
 };
+
+export class ContenedorApiDataSource {
+  
+  async getContenedores() {
+        const url = `${API_BASE_URL}/contenedores/`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Error al obtener los datos de la API');
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+}

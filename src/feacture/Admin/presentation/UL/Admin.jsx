@@ -27,7 +27,7 @@ const AdminSection = () => {
   return (
     <div className="p-6 space-y-10">
       <div>
-        <h2 className="text-2xl font-bold mb-4">Temperatura y Análisis Bayesiano</h2>
+        <h2 className="text-2xl font-bold mb-4 text-[#2E6C43]">Temperatura y Análisis Bayesiano</h2>
         
         <TemperaturaChart 
           data={datosEnriquecidosConZona}
@@ -37,7 +37,7 @@ const AdminSection = () => {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold mb-4">Detección por Sensor Ultrasónico</h2>
+        <h2 className="text-2xl font-bold mb-4 text-[#2E6C43]">Detección por Sensor Ultrasónico</h2>
         <UltrasonicoChart data={ultrasonicoData} />
       </div>
     </div>
