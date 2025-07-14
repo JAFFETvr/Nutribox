@@ -78,3 +78,20 @@ export class ContenedorApiDataSource {
     }
   }
 }
+export class SensorRemoteDataSource {
+  async getSensorReadings() {
+      const url = `${API_BASE_URL}/sensores/`;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+      const data = await response.json();
+      return data; // Devuelve los datos tal como vienen de la API (DTOs)
+    } catch (error) {
+      console.error("Error en SensorRemoteDataSource:", error);
+      throw error; // Propaga el error para que sea manejado más arriba
+    }
+  }
+}

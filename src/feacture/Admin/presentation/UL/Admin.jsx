@@ -31,7 +31,7 @@ const AdminSection = () => {
         
         <TemperaturaChart 
           data={datosEnriquecidosConZona}
-          umbralTemperatura={28}
+          umbralTemperatura={30}
           zonaEvidencia="Zona Caliente"
         />
       </div>

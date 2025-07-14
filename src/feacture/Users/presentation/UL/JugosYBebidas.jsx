@@ -2,21 +2,26 @@ import React from 'react';
 import { useProductsViewModel } from '../ViewModel/useProductsViewModel';
 import ProductCard from './components/ProductCard';
 import { useNavigate } from 'react-router-dom';
+
 export const JugosYBebidas = () => {
   const { products, loading } = useProductsViewModel();
   const navigate = useNavigate();
 
   return (
-    <div className="bg-[#FFC26A] min-h-screen font-sans p-8">
-
-         <div className="absolute top-6 left-6 z-10">
+    <div className="bg-[#FFC26A] min-h-screen font-sans p-8 relative">
+      {/* Encabezado con Volver y Saldo */}
+      <div className="flex justify-between items-center mb-4 px-4">
         <button 
           onClick={() => navigate("/selection")}
           className="text-white text-lg font-semibold cursor-pointer hover:underline"
         >
           ← Volver
         </button>
+        <div className="text-white text-lg font-semibold">
+          Saldo: $ 00.00
+        </div>
       </div>
+
       <h1 className="text-center text-4xl font-bold text-[#2E5A3F] mb-12">
         Jugos y Bebidas
       </h1>
@@ -30,7 +35,6 @@ export const JugosYBebidas = () => {
           ))}
         </div>
       )}
-
 
       <img 
         src="/leeaf.png"
