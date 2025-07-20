@@ -1,3 +1,5 @@
+// src/views/Login/ViewModel/ViewModel.js
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoginUseCase } from '../../domian/UsesCases/Post'; 
@@ -32,6 +34,15 @@ export const useLoginViewModel = () => {
         try {
             const user = await loginUseCase.execute(values.phone, values.password);
             console.log('Login exitoso, usuario:', user);
+
+            // --- INICIO DEL CAMBIO ---
+            // Guardamos el objeto de usuario completo en localStorage.
+            // Lo convertimos a string porque localStorage solo almacena texto.
+            if (user) {
+                localStorage.setItem('user', JSON.stringify(user));
+            }
+            // --- FIN DEL CAMBIO ---
+
             navigate('/dashboard');
         } catch (e) {
             setError(e.message);

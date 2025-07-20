@@ -1,3 +1,5 @@
+// src/views/Dashboard/ViewModel/viewModel.js
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import {
@@ -13,11 +15,11 @@ export const useDashboardViewModel = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
+    // ... (resto del código sin cambios)
     const navItems = [
         new NavItem('Administrador', FiUser, '/dashboard'),
         new NavItem('Ventas', FiDollarSign, '/dashboard/sales'),
         new NavItem('Productos', FiPackage, '/dashboard/products'),
-        // --- INICIO DEL CAMBIO SOLICITADO ---
         new NavItem('Dispensadores', FiHardDrive, '/dashboard/stats'), 
     ];
 
@@ -32,7 +34,6 @@ export const useDashboardViewModel = () => {
             showCancelButton: true,
             confirmButtonText: 'Sí, cerrar sesión',
             cancelButtonText: 'Cancelar',
-            
             customClass: {
                 popup: 'bg-white rounded-xl shadow-lg',
                 title: 'text-gray-800 font-bold text-2xl',
@@ -40,18 +41,23 @@ export const useDashboardViewModel = () => {
                 cancelButton: 'bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition-colors',
             },
             buttonsStyling: false,
-
         }).then((result) => {
             if (result.isConfirmed) {
+                // --- INICIO DEL CAMBIO ---
+                // Limpiamos los datos del usuario de localStorage antes de redirigir
+                localStorage.removeItem('user');
+                // --- FIN DEL CAMBIO ---
+                
                 console.log('Cerrando sesión...');
                 navigate('/login');
             }
         });
     };
 
+    // ... (resto del código sin cambios)
     const handleAddItem = () => {
         let currentSection = 'Desconocida';
-
+        // ... (código de handleAddItem)
         switch (location.pathname) {
             case '/dashboard':
                 currentSection = 'Administrador';
