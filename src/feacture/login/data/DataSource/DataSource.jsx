@@ -1,19 +1,21 @@
-export class LoginDataSource {
-    async login(phone, password) {
-        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        if (phone === 'jaffet' && password === 'password') {
-            
-            return Promise.resolve({
-                userId: 'user-001',
-                fullName: ' Carlos Jaffet',
-                emailAddress: 'juan.perez@example.com',
-                phoneNumber: phone,
-                token: 'fake-jwt-token-for-session-management' // Un token de sesión simulado
-            });
-        } else {
-           
-            return Promise.reject(new Error('Número telefónico o contraseña incorrectos.'));
+export class LoginDataSource {
+    async login(username, password) {
+        
+        const response = await fetch('http://127.0.0.1:8000/api/v1/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            const errorMessage = errorData?.detail || 'Error en el inicio de sesión. Inténtalo de nuevo.';
+            throw new Error(errorMessage);
         }
+
+        return await response.json();
     }
 }

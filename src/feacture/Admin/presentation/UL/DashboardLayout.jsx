@@ -3,13 +3,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useDashboardViewModel } from '../ViewModel/viewModel';
 import Sidebar from './Sidebar';
 
-const YourLogo = () => (
-    <img 
-        src="/logo.png" 
-        alt="Logo de la Empresa" 
-        className="h-24 w-auto"
-    />
-);
+// Se elimina el componente 'YourLogo' ya que no se usará.
 
 const DashboardLayout = () => {
     const { 
@@ -31,11 +25,22 @@ const DashboardLayout = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
 
+    // --- INICIO DEL CAMBIO SOLICITADO ---
+    // Creamos el elemento de bienvenida directamente aquí.
+    const WelcomeMessage = (
+        <div className="px-4 text-center font-semibold">
+            <h3 className="text-xl">Welcome</h3>
+            <p className="truncate text-lg text-white/80">Jaffet</p>
+        </div>
+    );
+    // --- FIN DEL CAMBIO SOLICITADO ---
+
+
     return (
         <div className="flex bg-gray-100 h-screen overflow-hidden">
             <Sidebar 
                 isOpen={isSidebarOpen}
-                logo={<YourLogo />}
+                logo={WelcomeMessage} // <-- Aquí pasamos el nuevo mensaje de bienvenida.
                 navItems={navItems} 
                 logoutItem={logoutItem}
                 onLogout={handleLogout}

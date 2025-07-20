@@ -1,3 +1,5 @@
+// src/data/Repository/repository.js
+
 import { productApiDataSource } from '../DataSource/dataSource';
 import { Product } from '../../domain/Entities/Product';
 
@@ -16,7 +18,8 @@ export class ProductRepositoryImpl {
       apiProduct.id,
       apiProduct.nombre,
       apiProduct.precio,
-      apiProduct.descripcion
+      apiProduct.descripcion,
+      apiProduct.url_imagen
     ));
   }
 

@@ -5,17 +5,19 @@ export class LoginRepository {
         this.dataSource = dataSource;
     }
 
-    async login(phone, password) {
-        const rawUserData = await this.dataSource.login(phone, password);
-      
-        const user = new User({
-            id: rawUserData.userId,
-            name: rawUserData.fullName,
-            email: rawUserData.emailAddress,
-            phone: rawUserData.phoneNumber,
-        });
+    async login(username, password) {
+        const apiResponse = await this.dataSource.login(username, password);
 
-      
+        if (apiResponse.access_token) {
+            localStorage.setItem('authToken', apiResponse.access_token);
+        }
+
+        const user = new User({
+            id: apiResponse.user.id,
+            name: apiResponse.user.username, 
+            email: apiResponse.user.email,
+            role: apiResponse.user.role,
+        });
 
         return user;
     }

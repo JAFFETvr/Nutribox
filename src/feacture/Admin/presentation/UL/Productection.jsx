@@ -1,3 +1,5 @@
+// src/presentation/pages/InventoryPage.jsx
+
 import React from 'react';
 import { FiFilter, FiPlus } from 'react-icons/fi';
 import { useInventoryViewModel } from '../ViewModel/ProductViewModel';
@@ -13,20 +15,24 @@ const InventoryPage = () => {
     productToEdit,
     openModal, 
     closeModal, 
-    addProduct,
+    addProduct, // Se mantiene por si lo necesitas en otro lugar
     deleteProduct,
-    updateProduct
+    updateProduct,
+    addProductAndCreateContainer // <-- ¡Importante! Obtenemos la nueva función del ViewModel
   } = useInventoryViewModel();
 
   return (
-    <div className="w-full min-h-screen font-sans p-8 bg-gray-50">
+    <div className="w-full min-h-screen font-sans p-4 sm:p-8 bg-gray-50">
       <header className="flex justify-between items-center mb-8">
-        <FiFilter className="text-3xl text-gray-800 cursor-pointer" />
-        <h1 className="text-4xl font-bold text-[#2E6C43] flex-grow text-center">
+        <h1 className="text-3xl sm:text-4xl font-bold text-[#2E6C43] flex-grow text-center">
           Inventario
         </h1>
-        <button onClick={() => openModal()} aria-label="Añadir producto">
-          <FiPlus className="text-3xl text-gray-800 cursor-pointer" />
+        <button 
+          onClick={() => openModal()} 
+          aria-label="Añadir producto"
+          className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+        >
+          <FiPlus className="text-3xl text-gray-800" />
         </button>
       </header>
 
@@ -40,8 +46,8 @@ const InventoryPage = () => {
             id={product.id}
             nombre={product.nombre}
             precio={product.precio}
-            image={'/naranja.png'} 
-            onDelete={deleteProduct}
+            url_imagen={product.url_imagen} 
+            onDelete={() => deleteProduct(product.id)}
             onEdit={() => openModal(product)} 
           />
         ))}
@@ -51,10 +57,11 @@ const InventoryPage = () => {
         )}
       </main>
       
+      {/* --- ¡LA ÚNICA LÍNEA QUE CAMBIA ES ESTA! --- */}
       <AddProductModal
         isOpen={isModalOpen}
         onClose={closeModal}
-        onAddProduct={addProduct}
+        onAddProduct={addProductAndCreateContainer} // Cambiamos 'addProduct' por la nueva función
         productToEdit={productToEdit}
         onUpdateProduct={updateProduct}
       />

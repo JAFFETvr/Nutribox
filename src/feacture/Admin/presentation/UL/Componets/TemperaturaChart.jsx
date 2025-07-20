@@ -7,7 +7,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  ReferenceLine,
   BarChart,
   Bar,
 } from "recharts";
@@ -15,79 +14,61 @@ import {
 const TemperaturaChart = ({ data, umbralTemperatura = 30, zonaEvidencia = "Zona Caliente" }) => {
   const [showHistogram, setShowHistogram] = useState(false);
 
-  // --- Extracción de temperaturas
-  const temperaturas = data.map((d) => d.temperatura);
+  const lineChartData = data.slice(-30);
 
-  // --- Promedio
-  const avgTemp =
-    temperaturas.length > 0
-      ? temperaturas.reduce((acc, cur) => acc + cur, 0) / temperaturas.length
-      : 0;
+  const histogramTemperaturas = useMemo(() => data.map((d) => d.temperatura), [data]);
 
-  // --- Moda
-  const modeTemp = useMemo(() => {
-    if (temperaturas.length === 0) return null;
-    const frequencyMap = temperaturas.reduce((acc, val) => {
-      acc[val] = (acc[val] || 0) + 1;
-      return acc;
-    }, {});
-    let mode = null;
-    let maxCount = 0;
-    for (const temp in frequencyMap) {
-      if (frequencyMap[temp] > maxCount) {
-        maxCount = frequencyMap[temp];
-        mode = parseFloat(temp);
-      }
-    }
-    return mode;
-  }, [temperaturas]);
-
-  // --- Límites
   const { minTemp, maxTemp } = useMemo(() => {
-    if (temperaturas.length === 0) return { minTemp: 0, maxTemp: 0 };
+    if (histogramTemperaturas.length === 0) return { minTemp: 0, maxTemp: 0 };
     return {
-      minTemp: Math.floor(Math.min(...temperaturas)),
-      maxTemp: Math.ceil(Math.max(...temperaturas)),
+      minTemp: Math.floor(Math.min(...histogramTemperaturas)),
+      maxTemp: Math.ceil(Math.max(...histogramTemperaturas)),
     };
-  }, [temperaturas]);
+  }, [histogramTemperaturas]);
 
-  // --- Histograma
   const bins = useMemo(() => {
-    if (temperaturas.length === 0) return [];
+    if (histogramTemperaturas.length === 0) return [];
     const newBins = [];
     for (let i = minTemp; i <= maxTemp; i++) {
       newBins.push({ temperatura: i, count: 0 });
     }
-    temperaturas.forEach((temp) => {
+    histogramTemperaturas.forEach((temp) => {
       const binIndex = Math.floor(temp) - minTemp;
       if (newBins[binIndex]) {
         newBins[binIndex].count++;
       }
     });
     return newBins;
-  }, [temperaturas, minTemp, maxTemp]);
+  }, [histogramTemperaturas, minTemp, maxTemp]);
 
-  // --- Teorema de Bayes aplicado a la zona seleccionada
   const bayesCalculations = useMemo(() => {
-    if (!data.length) return null;
+    if (data.length === 0) return null;
 
     const total = data.length;
-    const contenedoresZona = data.filter(d => d.zona === zonaEvidencia);
-    const contenedoresTempAlta = data.filter(d => d.temperatura > umbralTemperatura);
-    const contenedoresAmbos = contenedoresZona.filter(d => d.temperatura > umbralTemperatura);
+    const tieneTempAlta = (d) => d.temperatura > umbralTemperatura;
+    const esDeZonaEvidencia = (d) => d.zona === zonaEvidencia;
 
-    const pA = contenedoresTempAlta.length / total;
-    const pB = contenedoresZona.length / total;
-    const pB_dado_A = contenedoresTempAlta.length > 0
-      ? contenedoresAmbos.length / contenedoresTempAlta.length
-      : 0;
+    const contenedoresZona = data.filter(esDeZonaEvidencia);
+    const contenedoresNoZona = data.filter(d => d.zona !== zonaEvidencia);
+    
+    const p_zona = contenedoresZona.length / total;
+    const p_no_zona = 1 - p_zona;
 
-    const pA_dado_B = pB > 0 ? (pB_dado_A * pA) / pB : 0;
+    const zonaYTempAlta = contenedoresZona.filter(tieneTempAlta).length;
+    const noZonaYTempAlta = contenedoresNoZona.filter(tieneTempAlta).length;
 
-    return { pA_dado_B };
+    const p_temp_alta_dado_zona = contenedoresZona.length > 0 ? zonaYTempAlta / contenedoresZona.length : 0;
+    const p_temp_alta_dado_no_zona = contenedoresNoZona.length > 0 ? noZonaYTempAlta / contenedoresNoZona.length : 0;
+    
+    const numerador = p_temp_alta_dado_zona * p_zona;
+    const denominador = (p_temp_alta_dado_zona * p_zona) + (p_temp_alta_dado_no_zona * p_no_zona);
+
+    const probabilidadPosterior = denominador > 0 ? numerador / denominador : 0;
+
+    return { probabilidadPosterior };
   }, [data, umbralTemperatura, zonaEvidencia]);
 
-  // --- Renderizado
+
   return (
     <div className="w-full p-4 bg-white shadow-lg rounded-xl">
       <div className="h-[450px]">
@@ -117,12 +98,13 @@ const TemperaturaChart = ({ data, umbralTemperatura = 30, zonaEvidencia = "Zona 
               <Bar dataKey="count" fill="#82ca9d" />
             </BarChart>
           ) : (
-            <LineChart data={data} margin={{ top: 20, bottom: 25 }}>
+            <LineChart data={lineChartData} margin={{ top: 20, bottom: 25 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="id_contenedor" />
               <YAxis
                 label={{ value: "°C", angle: -90, position: "insideLeft" }}
-                domain={["auto", (dataMax) => Math.max(dataMax, avgTemp) * 1.1]}
+                domain={['auto', 32]}
+                tickFormatter={(tick) => `${tick}°C`}
               />
               <Tooltip
                 formatter={(value) => `${value.toFixed(2)} °C`}
@@ -134,33 +116,8 @@ const TemperaturaChart = ({ data, umbralTemperatura = 30, zonaEvidencia = "Zona 
                 stroke="#8884d8"
                 strokeWidth={2}
                 activeDot={{ r: 8 }}
+                dot={{ r: 4 }}
               />
-              <ReferenceLine
-                y={avgTemp}
-                stroke="red"
-                strokeDasharray="3 3"
-                label={{
-                  value: `Promedio: ${avgTemp.toFixed(2)} °C`,
-                  position: "insideTopLeft",
-                  fill: "red",
-                  dy: 15,
-                  dx: 15,
-                }}
-              />
-              {modeTemp !== null && (
-                <ReferenceLine
-                  y={modeTemp}
-                  stroke="green"
-                  strokeDasharray="3 3"
-                  label={{
-                    value: `Moda: ${modeTemp.toFixed(2)} °C`,
-                    position: "insideTopRight",
-                    fill: "green",
-                    dy: 15,
-                    dx: -15,
-                  }}
-                />
-              )}
             </LineChart>
           )}
         </ResponsiveContainer>
@@ -169,11 +126,10 @@ const TemperaturaChart = ({ data, umbralTemperatura = 30, zonaEvidencia = "Zona 
       {showHistogram && bayesCalculations && (
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
           <p className="text-blue-800 text-base">
-            Si un contenedor es de la <strong>{zonaEvidencia}</strong>, la probabilidad de que su temperatura
-            sea mayor a <strong>{umbralTemperatura}°C</strong> es del:
+            Si un contenedor tiene una temperatura mayor a <strong>{umbralTemperatura}°C</strong>, la probabilidad de que sea de la <strong>{zonaEvidencia}</strong> es del:
           </p>
           <p className="font-bold text-2xl text-blue-900 mt-2">
-            {(bayesCalculations.pA_dado_B * 100).toFixed(2)}%
+            {(bayesCalculations.probabilidadPosterior * 100).toFixed(2)}%
           </p>
         </div>
       )}

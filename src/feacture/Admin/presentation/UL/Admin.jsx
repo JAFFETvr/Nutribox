@@ -37,7 +37,7 @@ const AdminSection = () => {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold mb-4 text-[#2E6C43]">Detección por Sensor Ultrasónico</h2>
+        <h2 className="text-2xl font-bold mb-4 text-[#2E6C43]">Monitor de Actividad: Dispensador de Bebidas</h2>
         <UltrasonicoChart data={ultrasonicoData} />
       </div>
     </div>

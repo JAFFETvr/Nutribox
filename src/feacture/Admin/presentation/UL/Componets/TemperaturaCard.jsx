@@ -1,96 +1,146 @@
 import React from "react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-  LabelList,
-  Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, Legend
 } from "recharts";
-import { MdShowChart, MdBarChart, MdTrendingDown, MdPerson } from "react-icons/md";
+import { 
+  MdHourglassEmpty, 
+  MdLocalDrink, 
+  MdTimer, 
+  MdAnalytics, 
+  MdSettingsInputAntenna,
+  MdCheckCircleOutline 
+} from "react-icons/md";
+
+const UMBRAL_DETECCION_VASO_CM = 10;
+
+const KpiCard = ({ title, value, icon, subtext }) => (
+  <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-start space-x-4">
+    <div className="bg-slate-100 p-3 rounded-full">
+      {icon}
+    </div>
+    <div>
+      <p className="text-sm text-slate-600 font-semibold">{title}</p>
+      <p className="text-2xl font-bold text-slate-800">{value}</p>
+      {subtext && <p className="text-xs text-slate-500 mt-1">{subtext}</p>}
+    </div>
+  </div>
+);
+
+const RegistroSensorChart = ({ data, umbral }) => (
+  <div className="w-full h-[300px] mt-4">
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart
+        layout="vertical"
+        data={data}
+        margin={{ top: 5, right: 30, left: 50, bottom: 5 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+        <XAxis type="number" domain={[0, 'dataMax + 10']} tick={{ fontSize: 10, fill: '#64748b' }} stroke="#cbd5e1" />
+        <YAxis dataKey="timestamp" type="category" width={60} tick={{ fontSize: 8, fill: '#64748b' }} interval={0} stroke="#cbd5e1" axisLine={false} tickLine={false} />
+        <Tooltip formatter={(value) => `${value.toFixed(1)} cm`} cursor={{ fill: 'rgba(241, 245, 249, 0.5)' }} />
+        <Bar dataKey="distancia">
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={entry.distancia < umbral ? "#3b82f6" : "#94a3b8"} />
+          ))}
+          <LabelList dataKey="distancia" position="right" formatter={(value) => value.toFixed(0)} style={{ fontSize: '10px', fill: '#334155' }} />
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+);
 
 const UltrasonicoChart = ({ data }) => {
-  const umbralPresencia = 20;
-  const limitedData = data.slice(-30);
-  const distancias = limitedData.map(d => d.distancia);
+  if (!data || data.length === 0) {
+    return (
+      <div className="p-6 text-center text-slate-500 flex flex-col items-center justify-center min-h-screen bg-slate-50">
+        <MdHourglassEmpty className="text-5xl mb-4 text-slate-400" />
+        <h2 className="text-xl font-semibold text-slate-700">Esperando datos del sensor...</h2>
+        <p className="text-sm">El panel se activará al recibir la primera señal.</p>
+      </div>
+    );
+  }
 
-  const calcularMedia = arr =>
-    arr.reduce((acc, val) => acc + val, 0) / arr.length;
+  const historicoData = data.slice(-100);
+  const logData = data.slice(-20);
 
-  const calcularMediana = arr => {
-    const sorted = [...arr].sort((a, b) => a - b);
-    const mid = Math.floor(sorted.length / 2);
-    return sorted.length % 2 !== 0
-      ? sorted[mid]
-      : (sorted[mid - 1] + sorted[mid]) / 2;
-  };
+  const ultimaLectura = historicoData[historicoData.length - 1];
+  const hayVaso = ultimaLectura.distancia < UMBRAL_DETECCION_VASO_CM;
+  const estadoActual = hayVaso
+    ? { text: "Vaso Detectado", icon: <MdLocalDrink className="w-6 h-6 text-blue-500" /> }
+    : { text: "Disponible", icon: <MdCheckCircleOutline className="w-6 h-6 text-emerald-500" /> };
 
-  const calcularDesviacion = arr => {
-    const media = calcularMedia(arr);
-    const varianza = arr.reduce((acc, val) => acc + Math.pow(val - media, 2), 0) / arr.length;
-    return Math.sqrt(varianza);
-  };
+  let serviciosContados = 0;
+  for (let i = 1; i < historicoData.length; i++) {
+    const previaDisponible = historicoData[i - 1].distancia >= UMBRAL_DETECCION_VASO_CM;
+    const actualOcupado = historicoData[i].distancia < UMBRAL_DETECCION_VASO_CM;
+    if (previaDisponible && actualOcupado) {
+      serviciosContados++;
+    }
+  }
+  
+  const ultimoServicio = [...historicoData].reverse().find(d => d.distancia < UMBRAL_DETECCION_VASO_CM);
 
-  const media = calcularMedia(distancias).toFixed(2);
-  const mediana = calcularMediana(distancias).toFixed(2);
-  const desviacion = calcularDesviacion(distancias).toFixed(2);
-  const presencias = distancias.filter(d => d < umbralPresencia);
-  const probabilidadPresencia = ((presencias.length / distancias.length) * 100).toFixed(2);
+  const deteccionesPorHora = historicoData.reduce((acc, curr) => {
+    if (curr.distancia < UMBRAL_DETECCION_VASO_CM) {
+      try {
+        const hora = new Date(`1970-01-01T${curr.timestamp}`).getHours();
+        const clave = `${String(hora).padStart(2, '0')}:00`;
+        acc[clave] = (acc[clave] || 0) + 1;
+      } catch (e) { /* Ignorar timestamps inválidos */ }
+    }
+    return acc;
+  }, {});
+
+  const dataGraficoDemanda = Object.keys(deteccionesPorHora)
+    .map(hora => ({ hora: hora, servicios: deteccionesPorHora[hora] }))
+    .sort((a,b) => a.hora.localeCompare(b.hora));
 
   return (
-    <div className="w-full p-4 bg-white shadow-lg rounded-xl space-y-4">
-      <h2 className="text-2xl font-bold">Lecturas Ultrasónicas (últimas {limitedData.length})</h2>
-      <div className="text-sm text-gray-700 space-y-1">
-        <p className="flex items-center gap-2"><MdShowChart className="text-blue-500" /> <strong>Media:</strong> {media} cm</p>
-        <p className="flex items-center gap-2"><MdBarChart className="text-purple-500" /> <strong>Mediana:</strong> {mediana} cm</p>
-        <p className="flex items-center gap-2"><MdTrendingDown className="text-orange-500" /> <strong>Desviación estándar:</strong> {desviacion} cm</p>
-        <p className="flex items-center gap-2"><MdPerson className="text-green-600" /> <strong>Probabilidad de presencia (&lt; {umbralPresencia} cm):</strong> {probabilidadPresencia}%</p>
+    <div className="w-full min-h-screen p-4 md:p-6 bg-slate-50 font-sans">
+      <h1 className="text-3xl font-bold text-slate-800 mb-6">Dashboard de Dispensador Inteligente</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KpiCard title="Estado Operativo" value={estadoActual.text} icon={estadoActual.icon} />
+        
+        <KpiCard title="Total de Servicios" value={serviciosContados} icon={<MdLocalDrink className="w-6 h-6 text-violet-500"/>} />
+        
+        <KpiCard 
+          title="Último Servicio" 
+          value={ultimoServicio ? ultimoServicio.timestamp : "N/A"}
+          subtext={!ultimoServicio ? "Sin servicios recientes" : null}
+          icon={<MdTimer className="w-6 h-6 text-orange-500"/>} 
+        />
+        
+        <KpiCard 
+          title="Señal del Sensor" 
+          value={`${ultimaLectura.distancia.toFixed(1)} cm`}
+          subtext={`Última lectura: ${ultimaLectura.timestamp}`}
+          icon={<MdSettingsInputAntenna className="w-6 h-6 text-teal-500"/>} 
+        />
       </div>
-      <div className="h-[400px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            layout="vertical"
-            data={limitedData}
-            margin={{ top: 10, right: 30, left: 60, bottom: 20 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              type="number"
-              label={{ value: "Distancia (cm)", position: "insideBottom", offset: -5 }}
-              domain={["auto", "auto"]}
-            />
-            <YAxis
-              dataKey="timestamp"
-              type="category"
-              width={80}
-              tick={{ fontSize: 9 }}
-              interval={0}
-            />
-            <Tooltip
-              formatter={(value) => `${value} cm`}
-              labelFormatter={(label) => `Hora: ${label}`}
-            />
-            <ReferenceLine
-              x={umbralPresencia}
-              stroke="red"
-              strokeDasharray="3 3"
-              label={`Umbral (${umbralPresencia} cm)`}
-            />
-            <Bar dataKey="distancia">
-              {limitedData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={entry.distancia < umbralPresencia ? "#e53935" : "#4CAF50"}
-                />
-              ))}
-              <LabelList dataKey="distancia" position="right" />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+        <div className="lg:col-span-2 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+           <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2"><MdAnalytics /> Demanda por Franja Horaria</h2>
+           <p className="text-sm text-slate-500 mb-4">Análisis de detecciones de vasos para identificar picos de uso.</p>
+           <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dataGraficoDemanda} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0"/>
+                      <XAxis dataKey="hora" tick={{ fontSize: 12, fill: '#64748b' }} stroke="#cbd5e1" />
+                      <YAxis allowDecimals={false} label={{ value: 'Nº de Servicios', angle: -90, position: 'insideLeft', fill: '#64748b' }} tick={{ fontSize: 12, fill: '#64748b' }} stroke="#cbd5e1" />
+                      <Tooltip cursor={{fill: 'rgba(59, 130, 246, 0.1)'}} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '0.5rem' }}/>
+                      <Legend verticalAlign="top" wrapperStyle={{ paddingBottom: '20px', color: '#334155' }} />
+                      <Bar dataKey="servicios" fill="#3b82f6" name="Servicios" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+              </ResponsiveContainer>
+           </div>
+        </div>
+        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+          <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2"><MdSettingsInputAntenna /> Registro de Detección</h2>
+          <p className="text-sm text-slate-500">Historial de las últimas {logData.length} lecturas del sensor.</p>
+          <RegistroSensorChart data={logData} umbral={UMBRAL_DETECCION_VASO_CM} />
+        </div>
       </div>
     </div>
   );
