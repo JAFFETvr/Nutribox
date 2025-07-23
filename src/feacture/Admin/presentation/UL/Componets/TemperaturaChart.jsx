@@ -14,6 +14,7 @@ import {
 const TemperaturaChart = ({ data, umbralTemperatura = 30, zonaEvidencia = "Zona Caliente" }) => {
   const [showHistogram, setShowHistogram] = useState(false);
 
+  // Toma los últimos 30 puntos para el gráfico de línea para que no esté sobrecargado
   const lineChartData = data.slice(-30);
 
   const histogramTemperaturas = useMemo(() => data.map((d) => d.temperatura), [data]);
@@ -71,9 +72,10 @@ const TemperaturaChart = ({ data, umbralTemperatura = 30, zonaEvidencia = "Zona 
 
   return (
     <div className="w-full p-4 bg-white shadow-lg rounded-xl">
-      <div className="h-[450px]">
+      {/* Altura responsiva para el contenedor del gráfico */}
+      <div className="h-[400px] sm:h-[450px]">
         <h4
-          className="text-xl font-bold mb-4 cursor-pointer"
+          className="text-lg sm:text-xl font-bold mb-4 cursor-pointer"
           onClick={() => setShowHistogram(!showHistogram)}
         >
           Grafica {showHistogram ? "(Histograma)" : "(Línea)"} - Haz click para {showHistogram ? "ver línea" : "ver histograma"}
@@ -88,23 +90,29 @@ const TemperaturaChart = ({ data, umbralTemperatura = 30, zonaEvidencia = "Zona 
                 label={{ value: "Temperatura (°C)", position: "insideBottom", offset: -15 }}
                 type="number"
                 domain={[minTemp, maxTemp]}
-                tickCount={maxTemp - minTemp + 1}
+                // Se ajusta el tickCount para evitar superposición en pantallas pequeñas
+                tickCount={10} 
+                interval="preserveStartEnd"
+                tick={{fontSize: 12}}
               />
               <YAxis
                 label={{ value: "Frecuencia", angle: -90, position: "insideLeft" }}
                 allowDecimals={false}
+                tick={{fontSize: 12}}
               />
               <Tooltip />
               <Bar dataKey="count" fill="#82ca9d" />
             </BarChart>
           ) : (
-            <LineChart data={lineChartData} margin={{ top: 20, bottom: 25 }}>
+            <LineChart data={lineChartData} margin={{ top: 20, right: 20, bottom: 25, left: 10 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="id_contenedor" />
+              {/* Se añade un intervalo para que las etiquetas no se solapen en móvil */}
+              <XAxis dataKey="id_contenedor" interval={4} tick={{fontSize: 12}} />
               <YAxis
                 label={{ value: "°C", angle: -90, position: "insideLeft" }}
                 domain={['auto', 32]}
                 tickFormatter={(tick) => `${tick}°C`}
+                tick={{fontSize: 12}}
               />
               <Tooltip
                 formatter={(value) => `${value.toFixed(2)} °C`}
@@ -125,10 +133,11 @@ const TemperaturaChart = ({ data, umbralTemperatura = 30, zonaEvidencia = "Zona 
 
       {showHistogram && bayesCalculations && (
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
-          <p className="text-blue-800 text-base">
+          <p className="text-blue-800 text-sm sm:text-base">
             Si un contenedor tiene una temperatura mayor a <strong>{umbralTemperatura}°C</strong>, la probabilidad de que sea de la <strong>{zonaEvidencia}</strong> es del:
           </p>
-          <p className="font-bold text-2xl text-blue-900 mt-2">
+          {/* Tamaño de fuente responsivo */}
+          <p className="font-bold text-xl sm:text-2xl text-blue-900 mt-2">
             {(bayesCalculations.probabilidadPosterior * 100).toFixed(2)}%
           </p>
         </div>

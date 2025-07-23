@@ -9,4 +9,13 @@ export class ContenedorRepositoryImpl {
     const apiData = await this.apiDataSource.getContenedores();
     return apiData.map(item => new Contenedor(item));
   }
+
+  // ========= NUEVO MÉTODO AÑADIDO =========
+  async updateContainer(containerId, containerData) {
+    // Llamamos al dataSource para que haga la petición PUT
+    const updatedApiData = await this.apiDataSource.updateContainer(containerId, containerData);
+    // Convertimos la respuesta de la API de nuevo en una entidad de dominio
+    return new Contenedor(updatedApiData);
+  }
+  // =======================================
 }

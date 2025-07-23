@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { FiTrash2, FiEdit } from 'react-icons/fi';
 import Swal from 'sweetalert2'; 
@@ -7,8 +6,6 @@ const ProductCard = ({ id, nombre, url_imagen, precio, onDelete, onEdit }) => {
 
   const handleDelete = () => {
     // La lógica de handleDelete no cambia.
-    console.log(`%c[ProductCard] 1. Click en eliminar. ID: ${id}`, 'color: red; font-weight: bold;');
-    
     Swal.fire({
       title: '¿Estás seguro?',
       text: `¡No podrás revertir la eliminación de "${nombre}"!`,
@@ -37,33 +34,32 @@ const ProductCard = ({ id, nombre, url_imagen, precio, onDelete, onEdit }) => {
   };
 
   return (
-    // Contenedor principal sin cambios
-    <div className="relative flex flex-col items-center w-72 pt-16 pb-6 px-6 rounded-2xl shadow-lg bg-white hover:bg-orange-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+    <div className="relative flex flex-col items-center w-72 pt-16 pb-6 px-6 rounded-2xl shadow-lg bg-white hover:bg-orange-50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       
       {url_imagen && (
-        // 1. Contenedor invisible: Se quitaron bg-white, shadow-lg y overflow-hidden.
-        //    Ahora es solo un marco de posicionamiento transparente.
         <div className="absolute -top-16 w-32 h-32 flex items-center justify-center">
             <img 
               src={url_imagen} 
               alt={nombre} 
-              // 2. Imagen con estilo propio: Se le añade drop-shadow-lg para que la sombra
-              //    siga la forma de la imagen, no del círculo.
               className="w-full h-full object-contain drop-shadow-lg"
             />
         </div>
       )}
 
-      {/* El resto del contenido no cambia */}
+      {/* Título del producto (sin cambios) */}
       <h3 className="text-xl font-semibold text-gray-800 mb-6 min-h-[56px] text-center">{nombre}</h3>
       
-      <div className="w-full flex justify-around mb-6">
-        <div className="flex flex-col items-center gap-2">
-          <span className="px-4 py-1 text-sm font-semibold rounded-lg bg-white text-gray-800 border border-gray-300">Unidad</span>
-          <span className="text-lg font-bold text-black">${(Number(precio) || 0).toFixed(2)}</span>
-        </div>
+      {/* ========= SECCIÓN DE PRECIO MODIFICADA ========= */}
+      {/* Se eliminó el span "Unidad" y se simplificó la estructura. */}
+      {/* El precio ahora es el único elemento, centrado y con mayor tamaño. */}
+      <div className="w-full text-center mb-6">
+        <p className="text-2xl font-bold text-gray-900">
+          ${(Number(precio) || 0).toFixed(2)}
+        </p>
       </div>
+      {/* =============================================== */}
       
+      {/* Iconos de acción (sin cambios, se empujan al final con mt-auto) */}
       <div className="flex gap-12 mt-auto">
         <FiTrash2 onClick={handleDelete} className="text-2xl text-gray-600 cursor-pointer transition-colors hover:text-black" />
         <FiEdit onClick={onEdit} className="text-2xl text-gray-600 cursor-pointer transition-colors hover:text-black" />

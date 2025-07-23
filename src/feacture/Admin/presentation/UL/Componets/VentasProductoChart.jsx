@@ -21,20 +21,18 @@ const ProductListItem = ({ name }) => (
   </li>
 );
 
-
-export const DashboardProductos = ({ datosVentas, productosNoVendidos }) => {
-
+export const DashboardProductos = ({ topSold, leastSold }) => {
   const chartData = {
-    labels: datosVentas.map(p => p.nombre),
+    labels: topSold.map(p => p.nombre),
     datasets: [
       {
-        label: 'Unidades Vendidas',
-        data: datosVentas.map(p => p.cantidad),
-        backgroundColor: '#3b82f6', // Un azul profesional y consistente
+        label: 'Número de Ventas',
+        data: topSold.map(p => p.count),
+        backgroundColor: '#3b82f6',
         borderColor: '#3b82f6',
         borderWidth: 1,
         borderRadius: 5,
-        barPercentage: 0.6, // Barras un poco más delgadas
+        barPercentage: 0.6,
         categoryPercentage: 0.7,
       },
     ],
@@ -44,16 +42,12 @@ export const DashboardProductos = ({ datosVentas, productosNoVendidos }) => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        display: false,
-      },
-      title: {
-        display: false,
-      },
+      legend: { display: false },
+      title: { display: false },
       tooltip: {
-        backgroundColor: '#1e293b', // slate-800
-        titleColor: '#f8fafc',    // slate-50
-        bodyColor: '#cbd5e1',     // slate-300
+        backgroundColor: '#1e293b',
+        titleColor: '#f8fafc',
+        bodyColor: '#cbd5e1',
         padding: 10,
         cornerRadius: 4,
         displayColors: false,
@@ -62,48 +56,44 @@ export const DashboardProductos = ({ datosVentas, productosNoVendidos }) => {
     scales: {
       y: {
         beginAtZero: true,
-        // Eliminamos el 'max' fijo para que el gráfico se adapte a los datos
-        grid: {
-          color: '#e2e8f0', // slate-200
-        },
-        ticks: {
-          color: '#64748b', // slate-500
-          stepSize: 5, // Chart.js lo usará como sugerencia
-        },
+        grid: { color: '#e2e8f0' },
+        ticks: { color: '#64748b', precision: 0 },
       },
       x: {
-        grid: {
-          display: false,
-        },
-        ticks: {
-          color: '#64748b', // slate-500
-        },
+        grid: { display: false },
+        ticks: { color: '#64748b' },
       },
     },
   };
+  
+  // Aquí se asume que 'leastSold' (que viene de las props) ya ha sido filtrado
+  // en el ViewModel para contener solo los productos con una venta.
+  const productsWithOneSale = leastSold.filter(p => p.count === 1).map(p => p.nombre);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 font-sans">
       
-      {/* Columna para la Gráfica */}
       <div className="lg:col-span-2 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
         <h2 className="text-xl font-semibold text-slate-800 mb-4">Rendimiento de Ventas</h2>
-        <div className="h-80 relative">
-          <Bar data={chartData} options={chartOptions} />
-        </div>
+        {topSold && topSold.length > 0 ? (
+          <div className="h-80 relative">
+            <Bar data={chartData} options={chartOptions} />
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500 mt-4 h-80 flex items-center justify-center">No hay datos de ventas para mostrar.</p>
+        )}
       </div>
 
-      {/* Columna para la Lista de Productos sin Venta */}
       <div className="lg:col-span-1 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
-        <h2 className="text-xl font-semibold text-slate-800 mb-4">Productos sin Venta</h2>
-        {productosNoVendidos.length > 0 ? (
+        <h2 className="text-xl font-semibold text-slate-800 mb-4">Productos con una Sola Venta</h2>
+        {productsWithOneSale.length > 0 ? (
           <ul className="mt-4 space-y-3">
-            {productosNoVendidos.map((nombre, index) => (
+            {productsWithOneSale.map((nombre, index) => (
               <ProductListItem key={index} name={nombre} />
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-slate-500 mt-4">¡Todos los productos se han vendido!</p>
+          <p className="text-sm text-slate-500 mt-4">No hay productos con una única venta.</p>
         )}
       </div>
 

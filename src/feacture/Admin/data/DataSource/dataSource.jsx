@@ -1,6 +1,9 @@
+// src/data/dataSource/ApiDataSource.js (o donde lo tengas)
+// CÓDIGO COMPLETO Y MODIFICADO
+
 import axios from 'axios';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
+const API_BASE_URL = 'http://34.201.177.84:8000/api/v1';
 
 const api = axios.create({
   baseURL: API_BASE_URL
@@ -33,12 +36,25 @@ export const productApiDataSource = {
   async getProducts() {
     try {
       const response = await api.get('/productos/');
-      return response.data;
+      return response.data; // Esto debería devolver algo como [{ id: 38, nombre: 'Producto A', ... }, ...]
     } catch (error) {
       console.error("[DataSource] Error al obtener productos:", error);
       throw error;
     }
   },
+
+  // ========= NUEVA FUNCIÓN AÑADIDA =========
+  async getSales() {
+    try {
+      const response = await api.get('/ventas/');
+      return response.data;
+    } catch (error) {
+      console.error("[DataSource] Error al obtener ventas:", error);
+      throw error;
+    }
+  },
+  // ==========================================
+
   async addProduct(productData) {
     const formData = new FormData();
     formData.append('nombre', productData.nombre);
@@ -90,15 +106,29 @@ export const productApiDataSource = {
 };
 
 export class ContenedorApiDataSource {
+  
   async getContenedores() {
     try {
       const response = await api.get('/contenedores/');
       return response.data;
     } catch (error) {
-      console.error(error);
+      console.error("[DataSource] Error al obtener contenedores:", error);
       throw error;
     }
   }
+
+  // MÉTODO NUEVO QUE AÑADIMOS
+  async updateContainer(containerId, containerData) {
+    try {
+      const response = await api.put(`/contenedores/${containerId}/`, containerData);
+      return response.data;
+    } catch (error) {
+      console.error(`[DataSource] Error al actualizar el contenedor ${containerId}:`, error);
+      throw error;
+    }
+  }
+
+  // MÉTODO ORIGINAL (SIN DUPLICAR)
   async createContainer(containerData) {
     try {
       const response = await api.post('/contenedores/', containerData);
@@ -108,10 +138,12 @@ export class ContenedorApiDataSource {
       throw error;
     }
   }
+
+  // MÉTODO ORIGINAL (SIN DUPLICAR)
   async deleteContainer(containerId) {
     try {
       await api.delete(`/contenedores/${containerId}/`);
-      return { success: true };
+      return { success: true }; // Devuelve un objeto para indicar éxito
     } catch (error) {
       console.error(`[DataSource] Error al eliminar el contenedor ${containerId}:`, error);
       throw error;

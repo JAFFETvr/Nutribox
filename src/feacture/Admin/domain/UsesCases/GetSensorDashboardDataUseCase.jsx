@@ -5,33 +5,47 @@ export class GetSensorDashboardDataUseCase {
   }
 
   async execute() {
-    // 1. Obtenemos todos los registros del repositorio como antes.
     const allSensorReadings = await this.sensorRepository.getSensorReadings();
 
-    // CAMBIO CLAVE 1: Filtrar para procesar solo los registros de tipo 'moneda'.
-    // Asumimos que la SensorEntity tiene una propiedad `sensorType`.
-    // Si no la tiene, debemos añadirla en la Entity y en el Mapper del Repository.
     const coinReadings = allSensorReadings.filter(
       (reading) => reading.sensorType === 'moneda'
     );
-
-    // 2. Procesamos los datos ya filtrados para la gráfica.
-    const coinCounts = coinReadings.reduce((acc, current) => {
-      acc[current.value] = (acc[current.value] || 0) + 1;
-      return acc;
-    }, {});
     
-    // CAMBIO CLAVE 2: Calcular el ingreso total sumando el valor de cada moneda.
-    const totalIncome = coinReadings.reduce(
-      (sum, current) => sum + current.value,
-      0 // El valor inicial de la suma es 0
-    );
+  
+    let totalIncome = 0;
+    const coinCounts = {};
+    
+    const dailyTotals = { Lunes: 0, Martes: 0, Miércoles: 0, Jueves: 0, Viernes: 0, Sábado: 0, Domingo: 0 };
+    
 
-    // 3. Devolvemos los datos que la presentación necesita: la frecuencia y el total.
-    // Ya no devolvemos la lista de transacciones.
+    const getDayName = (dateString) => {
+        const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const date = new Date(dateString);
+        return days[date.getDay()];
+    };
+
+    for (const reading of coinReadings) {
+      coinCounts[reading.value] = (coinCounts[reading.value] || 0) + 1;
+
+      totalIncome += reading.value;
+      
+      
+      const dayName = getDayName(reading.timestamp); 
+      if (dailyTotals.hasOwnProperty(dayName)) {
+        dailyTotals[dayName] += reading.value;
+      }
+    }
+
+    const diasOrdenados = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    const ventasPorDia = diasOrdenados.map(dia => ({
+      fecha: dia,
+      ingresos: dailyTotals[dia]
+    }));
+
     return {
       coinCounts,
       totalIncome,
+      ventasPorDia, 
     };
   }
 }
