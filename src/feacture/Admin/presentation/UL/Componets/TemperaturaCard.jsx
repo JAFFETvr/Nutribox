@@ -13,7 +13,6 @@ import {
 
 const UMBRAL_DETECCION_VASO_CM = 10;
 
-// Fuentes responsivas y correctas para el KpiCard
 const KpiCard = ({ title, value, icon, subtext }) => (
   <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center space-x-4">
     <div className="bg-slate-100 p-3 rounded-full">

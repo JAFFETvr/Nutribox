@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 // Importamos todo lo necesario
 import { GetSensorDashboardDataUseCase } from '../../domain/UsesCases/GetSensorDashboardDataUseCase';
-import { SensorRepositoryImpl } from '../../data/Repository/SensorRepositoryImpl';
+import { SensorRepositoryImpl } from '../../data/Repository/VentasRepositoryImpl';
 import { SensorRemoteDataSource, productApiDataSource } from '../../data/DataSource/dataSource';
 
 export const useVentasViewModel = () => {

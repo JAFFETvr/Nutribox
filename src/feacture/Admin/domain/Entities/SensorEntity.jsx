@@ -1,4 +1,3 @@
-// Ubicación: admin/domain/Entities/SensorEntity.js
 export class SensorEntity {
   constructor({ id, machineId, sensorType, value, unit, timestamp }) { // <-- Añadido sensorType
     this.id = id;

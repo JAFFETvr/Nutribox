@@ -1,54 +1,103 @@
-import axios from 'axios';
+// La URL base del WebSocket, sin parámetros.
+const WEBSOCKET_BASE_URL = 'ws://34.201.177.84:8000/ws/sensores';
 
-const WS_URL = 'ws://127.0.0.1:8000/ws/sensores';
-class WebSocketManager {
+class SensorWebSocketDataSource {
   constructor() {
-    this.socket = null; this.listeners = new Set(); this.connect();
+    this.socket = null;
+    this.dataSubscribers = [];
+    this.statusSubscribers = [];
+    this.isConnecting = false;
+    this.connectionState = 'disconnected';
   }
+
+  updateStatus(newStatus) {
+    this.connectionState = newStatus;
+    this.statusSubscribers.forEach(callback => callback(newStatus));
+  }
+
   connect() {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) return;
-    this.socket = new WebSocket(WS_URL);
-    this.socket.onopen = () => console.log('✅ Conexión WebSocket establecida.');
-    this.socket.onclose = () => setTimeout(() => this.connect(), 3000);
-    this.socket.onerror = (error) => console.error('WebSocket error:', error);
+    if (this.socket && this.socket.readyState === WebSocket.OPEN || this.isConnecting) {
+      return;
+    }
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+
+    // 1. Obtener el token ANTES de intentar conectar.
+    const token = localStorage.getItem('authToken');
+
+    // 2. Si no hay token, no intentar conectar y marcar como error.
+    if (!token) {
+      console.error("[WebSocket] No se encontró 'authToken' en localStorage. Conexión cancelada.");
+      this.updateStatus('error'); // Notifica a la UI que hubo un problema.
+      return;
+    }
+
+    // 3. Construir la URL final con el token como parámetro de consulta.
+    // encodeURIComponent es importante por si el token tiene caracteres especiales.
+    const finalWebSocketUrl = `${WEBSOCKET_BASE_URL}?token=${encodeURIComponent(token)}`;
+
+    this.isConnecting = true;
+    this.updateStatus('connecting');
+    console.log('[WebSocket] Conectando a:', finalWebSocketUrl); // Log para depurar
+
+    // 4. Usar la URL final para crear la instancia del WebSocket.
+    this.socket = new WebSocket(finalWebSocketUrl);
+    
+    // --- FIN DE LA MODIFICACIÓN ---
+
+    this.socket.onopen = () => {
+      this.isConnecting = false;
+      this.updateStatus('connected');
+      console.log('%c[WebSocket] Conexión establecida.', 'color: green; font-weight: bold;');
+      // YA NO es necesario enviar el token por aquí, la autenticación ya se hizo.
+    };
+
     this.socket.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
-        this.listeners.forEach(listener => listener(data));
-      } catch (e) { console.error("Error al parsear mensaje:", e); }
+        const sensorData = JSON.parse(event.data);
+        this.dataSubscribers.forEach(callback => callback(sensorData));
+      } catch (error) {
+        console.error('[WebSocket] Error al procesar mensaje:', error);
+      }
+    };
+
+    this.socket.onerror = (error) => {
+      this.isConnecting = false;
+      this.updateStatus('error');
+      console.error('[WebSocket] Ocurrió un error en la conexión.', error);
+    };
+
+    this.socket.onclose = (event) => {
+      this.isConnecting = false;
+      this.updateStatus('disconnected');
+      console.warn(`[WebSocket] Conexión cerrada. Código: ${event.code}. Razón: ${event.reason}. Reconectando en 5s...`);
+      setTimeout(() => this.connect(), 5000);
     };
   }
-  subscribe(callback) { this.listeners.add(callback); }
-  unsubscribe(callback) { this.listeners.delete(callback); }
-}
-const sensorWebSocketManager = new WebSocketManager();
 
-// --- DATASOURCE DE SENSORES (MODIFICADO PARA WEBSOCKET) ---
-class SensorRemoteDataSource {
-  constructor() {
-    this.latestReadings = {}; this.subscribers = new Set();
-    sensorWebSocketManager.subscribe(this.handleRawData.bind(this));
+  subscribeToData(callback) {
+    this.dataSubscribers.push(callback);
   }
-  handleRawData(rawData) {
-    // Asumimos que el WS envía un objeto o un array de objetos
-    const readings = Array.isArray(rawData) ? rawData : [rawData];
-    readings.forEach(reading => {
-        // Usamos una clave única, por ejemplo, combinando machineId y sensorType
-        const key = `${reading.machine_id}-${reading.sensor_type}`;
-        this.latestReadings[key] = reading;
-    });
-    this.notifySubscribers();
+
+  unsubscribeFromData(callback) {
+    this.dataSubscribers = this.dataSubscribers.filter(sub => sub !== callback);
   }
-  notifySubscribers() {
-    const allReadings = Object.values(this.latestReadings);
-    this.subscribers.forEach(callback => callback(allReadings));
+
+  subscribeToStatus(callback) {
+    this.statusSubscribers.push(callback);
+    callback(this.connectionState);
   }
-  getSensorReadings(callback) {
-    if (typeof callback !== 'function') return () => {};
-    this.subscribers.add(callback);
-    callback(Object.values(this.latestReadings));
-    return () => this.subscribers.delete(callback);
+
+  unsubscribeFromStatus(callback) {
+    this.statusSubscribers = this.statusSubscribers.filter(sub => sub !== callback);
+  }
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.onclose = null; 
+      this.socket.close(1000, "Cierre manual por el cliente"); // Código 1000 para cierre normal
+    }
   }
 }
-// Exportamos UNA ÚNICA INSTANCIA para que toda la app la use
-export const sensorRemoteDataSource = new SensorRemoteDataSource();
+
+export const sensorWebSocketDataSource = new SensorWebSocketDataSource();
