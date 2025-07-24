@@ -38,7 +38,14 @@ const TemperaturaChart = ({ data, umbralTemperatura = 30, zonaEvidencia = "Zona 
 
     const resultado = denominador ? numerador / denominador : 0;
 
-    return { probabilidadPosterior: resultado };
+    return {
+      probabilidadPosterior: resultado,
+      zona,
+      zonaYAlta,
+      noZona,
+      noZonaYAlta,
+      total
+    };
   }, [lineChartData, umbralTemperatura, zonaEvidencia]);
 
   const histogramTemperaturas = useMemo(() => lineChartData.map(d => d.temperatura), [lineChartData]);
