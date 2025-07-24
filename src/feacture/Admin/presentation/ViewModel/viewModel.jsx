@@ -1,9 +1,7 @@
-// src/views/Dashboard/ViewModel/viewModel.js
-
 import { useLocation, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import {
-    FiUser,
+    FiShield,
     FiDollarSign,
     FiPackage,
     FiHardDrive, 
@@ -15,9 +13,8 @@ export const useDashboardViewModel = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // ... (resto del código sin cambios)
     const navItems = [
-        new NavItem('Administrador', FiUser, '/dashboard'),
+        new NavItem('Administrador', FiShield, '/dashboard'),
         new NavItem('Ventas', FiDollarSign, '/dashboard/sales'),
         new NavItem('Productos', FiPackage, '/dashboard/products'),
         new NavItem('Dispensadores', FiHardDrive, '/dashboard/stats'), 
@@ -43,21 +40,15 @@ export const useDashboardViewModel = () => {
             buttonsStyling: false,
         }).then((result) => {
             if (result.isConfirmed) {
-                // --- INICIO DEL CAMBIO ---
-                // Limpiamos los datos del usuario de localStorage antes de redirigir
                 localStorage.removeItem('user');
-                // --- FIN DEL CAMBIO ---
-                
                 console.log('Cerrando sesión...');
                 navigate('/login');
             }
         });
     };
 
-    // ... (resto del código sin cambios)
     const handleAddItem = () => {
         let currentSection = 'Desconocida';
-        // ... (código de handleAddItem)
         switch (location.pathname) {
             case '/dashboard':
                 currentSection = 'Administrador';
@@ -71,11 +62,9 @@ export const useDashboardViewModel = () => {
             case '/dashboard/dispensers': 
                 currentSection = 'Dispensadores'; 
                 break;
-            
             default:
                 console.log('Ruta no reconocida para el botón de añadir');
         }
-
         console.log(`Botón "+" presionado en la sección: ${currentSection}`);
         alert(`Se ha presionado el botón "Añadir" en la sección de ${currentSection}.`);
     };

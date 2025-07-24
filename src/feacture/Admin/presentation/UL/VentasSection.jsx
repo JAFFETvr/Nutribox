@@ -1,39 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
-import { 
-  Chart as ChartJS, 
-  CategoryScale, 
-  LinearScale, 
-  PointElement, 
-  LineElement, 
-  Title, 
-  Tooltip, 
-  Legend, 
-  Filler 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
 } from 'chart.js';
+import Swal from 'sweetalert2';
 import { useVentasViewModel } from '../ViewModel/VentasViewModel';
 import { FaPiggyBank, FaCoins, FaChartLine, FaDownload } from 'react-icons/fa';
 import { DashboardProductos } from './Componets/VentasProductoChart';
 import { exportSalesReport } from '../../../../utils/ExcelExporter';
+import { SensorRemoteDataSource } from '../../data/DataSource/dataSource';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 const KpiCard = ({ title, value, icon, subtext }) => (
-    <div className="bg-white p-4 sm:p-6 rounded-lg border border-slate-200 shadow-sm flex items-start space-x-4">
-      <div className="bg-slate-100 p-3 sm:p-4 rounded-full">
-        {icon}
-      </div>
-      <div>
-        <p className="text-sm font-semibold text-slate-600">{title}</p>
-        <p className="text-2xl sm:text-3xl font-bold text-slate-800">{value}</p>
-        {subtext && <p className="text-xs text-slate-500 mt-1">{subtext}</p>}
-      </div>
+  <div className="bg-white p-4 sm:p-6 rounded-lg border border-slate-200 shadow-sm flex items-start space-x-4">
+    <div className="bg-slate-100 p-3 sm:p-4 rounded-full">
+      {icon}
     </div>
+    <div>
+      <p className="text-sm font-semibold text-slate-600">{title}</p>
+      <p className="text-2xl sm:text-3xl font-bold text-slate-800">{value}</p>
+      {subtext && <p className="text-xs text-slate-500 mt-1">{subtext}</p>}
+    </div>
+  </div>
 );
 
 export const Ventas = () => {
   const { isLoading, error, ventasPorDia, totalIncome, productSales } = useVentasViewModel();
-  
+  const sensorRemote = new SensorRemoteDataSource();
+
   const [lineChartData, setLineChartData] = useState({ labels: [], datasets: [] });
   const [isExporting, setIsExporting] = useState(false);
 
@@ -62,30 +65,30 @@ export const Ventas = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
-      tooltip: { 
-        backgroundColor: '#1e293b', 
-        padding: 10, 
-        cornerRadius: 4, 
+      tooltip: {
+        backgroundColor: '#1e293b',
+        padding: 10,
+        cornerRadius: 4,
         displayColors: false,
         callbacks: {
-            label: function(context) {
-                return `Ingresos: ${context.parsed.y.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}`;
-            }
+          label: function (context) {
+            return `Ingresos: ${context.parsed.y.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}`;
+          }
         }
       },
     },
     scales: {
-      y: { 
-        beginAtZero: true, 
-        grid: { color: '#e2e8f0' }, 
-        ticks: { 
-            color: '#64748b',
-            callback: function(value) { return '$' + value; }
-        } 
+      y: {
+        beginAtZero: true,
+        grid: { color: '#e2e8f0' },
+        ticks: {
+          color: '#64748b',
+          callback: function (value) { return '$' + value; }
+        }
       },
-      x: { 
-        grid: { display: false }, 
-        ticks: { color: '#64748b' } 
+      x: {
+        grid: { display: false },
+        ticks: { color: '#64748b' }
       },
     },
   };
@@ -98,6 +101,39 @@ export const Ventas = () => {
       console.error("Error al exportar el reporte:", exportError);
     } finally {
       setTimeout(() => setIsExporting(false), 1000);
+    }
+  };
+
+  const finalizarCorte = async () => {
+    const result = await Swal.fire({
+      title: '¿Finalizar corte?',
+      text: 'Esto reiniciará las ganancias registradas. ¿Deseas continuar?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, finalizar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await sensorRemote.finalizarCorteMonedas();
+        await Swal.fire({
+          icon: 'success',
+          title: '¡Corte finalizado!',
+          text: 'Las ganancias han sido reiniciadas correctamente.',
+          confirmButtonColor: '#10b981'
+        });
+      } catch (err) {
+        console.error('Error al finalizar corte:', err);
+        await Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Ocurrió un error al finalizar el corte.',
+          confirmButtonColor: '#ef4444'
+        });
+      }
     }
   };
 
@@ -114,48 +150,58 @@ export const Ventas = () => {
             <h1 className="text-2xl sm:text-3xl font-bold text-[#2E6C43]">Análisis de Ingresos</h1>
             <p className="text-sm sm:text-base text-slate-500 mt-1">Resumen del rendimiento financiero y de productos.</p>
           </div>
-          <button
-            onClick={handleExport}
-            disabled={isExporting}
-            className="flex items-center justify-center gap-2 bg-white border border-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-wait"
-          >
-            <FaDownload />
-            {isExporting ? 'Generando...' : 'Sacar Corte'}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleExport}
+              disabled={isExporting}
+              className="flex items-center justify-center gap-2 bg-white border border-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-wait"
+            >
+              <FaDownload />
+              {isExporting ? 'Generando...' : 'Sacar Corte'}
+            </button>
+
+            <button
+              onClick={finalizarCorte}
+              className="flex items-center justify-center gap-2 bg-red-100 border border-red-300 text-red-700 font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-red-200 transition-colors"
+            >
+              <FaCoins />
+              Finalizar Corte
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 sm:mb-8">
-            <KpiCard 
-                title="Ingreso Total"
-                value={totalIncome.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
-                icon={<FaPiggyBank className="w-6 h-6 text-emerald-500" />}
-                subtext="Suma de todas las ventas registradas."
-            />
-            <KpiCard 
-                title="Total de Transacciones"
-                value={totalTransactions.toLocaleString('es-MX')}
-                icon={<FaCoins className="w-6 h-6 text-amber-500" />}
-                subtext="Total de monedas de $5 insertadas."
-            />
+          <KpiCard
+            title="Ingreso Total"
+            value={totalIncome.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
+            icon={<FaPiggyBank className="w-6 h-6 text-emerald-500" />}
+            subtext="Suma de todas las ventas registradas."
+          />
+          <KpiCard
+            title="Total de Transacciones"
+            value={totalTransactions.toLocaleString('es-MX')}
+            icon={<FaCoins className="w-6 h-6 text-amber-500" />}
+            subtext="Total de monedas de $5 insertadas."
+          />
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white p-4 sm:p-6 rounded-lg border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                    <FaChartLine className="text-xl text-slate-500" />
-                    <h2 className="text-lg sm:text-xl font-semibold text-slate-800">Evolución de Ingresos</h2>
-                </div>
-                <div className="h-80 sm:h-96 relative">
-                    <Line data={lineChartData} options={lineChartOptions} />
-                </div>
+          <div className="bg-white p-4 sm:p-6 rounded-lg border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <FaChartLine className="text-xl text-slate-500" />
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-800">Evolución de Ingresos</h2>
             </div>
-            
-            <div className="lg:col-span-1">
-                <DashboardProductos 
-                    topSold={productSales.topSold} 
-                    leastSold={productSales.leastSold} 
-                />
+            <div className="h-80 sm:h-96 relative">
+              <Line data={lineChartData} options={lineChartOptions} />
             </div>
+          </div>
+
+          <div className="lg:col-span-1">
+            <DashboardProductos
+              topSold={productSales.topSold}
+              leastSold={productSales.leastSold}
+            />
+          </div>
         </div>
       </div>
     </div>

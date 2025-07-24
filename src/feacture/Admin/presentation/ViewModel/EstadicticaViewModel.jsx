@@ -1,8 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import Swal from 'sweetalert2';
-// Importa el nuevo caso de uso
+// Importa los casos de uso existentes
 import { UpdateContenedor } from '../../domain/UsesCases/UpdateContenedor';
 import { GetContenedoresStatus } from '../../domain/UsesCases/GetContenedoresStatus';
+// ========= IMPORTACIÓN AÑADIDA =========
+// Importa el caso de uso que acabamos de crear.
+import { DeleteContenedor } from '../../domain/UsesCases/DeleteContenedor'; 
+// =======================================
 import { ContenedorRepositoryImpl } from '../../data/Repository/ContenedorRepository';
 import { ContenedorApiDataSource, productApiDataSource } from '../../data/DataSource/dataSource';
 
@@ -10,8 +14,11 @@ import { ContenedorApiDataSource, productApiDataSource } from '../../data/DataSo
 const apiDataSource = new ContenedorApiDataSource();
 const contenedorRepository = new ContenedorRepositoryImpl(apiDataSource);
 const getContenedoresUseCase = new GetContenedoresStatus(contenedorRepository);
-// Crea una instancia del nuevo caso de uso
 const updateContenedorUseCase = new UpdateContenedor(contenedorRepository);
+// ========= INSTANCIACIÓN AÑADIDA =========
+// Crea la instancia para el caso de uso de eliminar.
+const deleteContenedorUseCase = new DeleteContenedor(contenedorRepository);
+// =========================================
 
 
 export function useContenedoresViewModel() {
@@ -22,8 +29,6 @@ export function useContenedoresViewModel() {
 
   const loadData = useCallback(async () => {
     try {
-      // No iniciamos el loading en recargas automáticas para una mejor UX
-      // setLoading(true); 
       const [contenedoresData, productsData] = await Promise.all([
         getContenedoresUseCase.execute(),
         productApiDataSource.getProducts()
@@ -34,7 +39,7 @@ export function useContenedoresViewModel() {
     } catch (e) {
       setError(e.message);
     } finally {
-      setLoading(false); // Solo se ejecuta la primera vez
+      setLoading(false);
     }
   }, []);
 
@@ -44,11 +49,41 @@ export function useContenedoresViewModel() {
     return () => clearInterval(intervalId);
   }, [loadData]);
 
-  const deleteContainer = async (containerId) => {
-    // ... (código existente sin cambios)
-  };
 
-  // ========= NUEVA FUNCIÓN AÑADIDA =========
+  // ========= LÓGICA DE BORRADO IMPLEMENTADA =========
+  const deleteContainer = async (containerId) => {
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: "¡No podrás revertir esta acción!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, ¡eliminar!',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await deleteContenedorUseCase.execute(containerId);
+        Swal.fire(
+          '¡Eliminado!',
+          'El dispensador ha sido eliminado.',
+          'success'
+        );
+        await loadData();
+      } catch (e) {
+        Swal.fire(
+          'Error',
+          'No se pudo eliminar el dispensador.',
+          'error'
+        );
+        console.error("Error al eliminar el contenedor:", e);
+      }
+    }
+  };
+  // =================================================
+
   const refillContainer = async (contenedor, nuevaCantidad) => {
     try {
       await updateContenedorUseCase.execute({ contenedor, nuevaCantidad });
@@ -57,7 +92,6 @@ export function useContenedoresViewModel() {
         `El dispensador #${contenedor.id} ha sido actualizado.`,
         'success'
       );
-      // Recargamos los datos para reflejar el cambio en la UI
       await loadData();
     } catch (e) {
       Swal.fire(
@@ -68,7 +102,6 @@ export function useContenedoresViewModel() {
       console.error("Error al rellenar el contenedor:", e);
     }
   };
-  // ==========================================
 
   return { contenedores, products, loading, error, deleteContainer, refillContainer };
 }

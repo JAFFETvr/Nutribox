@@ -160,4 +160,13 @@ export class SensorRemoteDataSource {
       throw error;
     }
   }
+   async finalizarCorteMonedas() {
+    try {
+      const response = await api.delete('/sensores/moneda');
+      return response.data;
+    } catch (error) {
+      console.error("Error al finalizar corte de monedas:", error);
+      throw error;
+    }
+  }
 }

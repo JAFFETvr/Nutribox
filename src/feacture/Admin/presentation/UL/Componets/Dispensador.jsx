@@ -12,7 +12,8 @@ const Wave = ({ colorClassName }) => (
 );
 
 const StackedItemsView = ({ nivel }) => {
-  const totalItems = 10;
+  // CAMBIO: Se ajustó el total de items a 5 para los dispensadores de sólidos (fruta).
+  const totalItems = 5;
   const filledItems = Math.round((nivel / 100) * totalItems);
 
   return (

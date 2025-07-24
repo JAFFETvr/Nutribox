@@ -17,5 +17,15 @@ export class ContenedorRepositoryImpl {
     // Convertimos la respuesta de la API de nuevo en una entidad de dominio
     return new Contenedor(updatedApiData);
   }
+
+  /**
+   * Llama al data source para eliminar un contenedor por su ID.
+   * @param {string | number} containerId 
+   */
+  async delete(containerId) {
+    // Aquí está la conexión clave:
+    // El método `delete` del repositorio llama al método `deleteContainer` del DataSource.
+    return this.apiDataSource.deleteContainer(containerId);
+  }
   // =======================================
 }

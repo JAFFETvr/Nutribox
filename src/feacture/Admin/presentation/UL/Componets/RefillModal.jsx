@@ -21,13 +21,11 @@ export const RefillModal = ({ isOpen, onClose, contenedores, onRefill, productMa
       setSelectedContainer(container);
       if (container) {
         setQuantity(container.cantidadActual);
-        // Limpiar error al cambiar de contenedor
         setValidationError('');
       }
     }
   }, [selectedContainerId, contenedores]);
 
-  // Manejador del envío del formulario
   const handleRefill = (e) => {
     e.preventDefault();
     if (validationError) return;
@@ -36,12 +34,8 @@ export const RefillModal = ({ isOpen, onClose, contenedores, onRefill, productMa
     }
   };
 
-  // ==================== CAMBIO CLAVE AQUÍ ====================
-  // Nueva función para manejar el cambio en la cantidad con limitación
   const handleQuantityChange = (e) => {
     const newValue = e.target.value;
-    // Si el campo está vacío, permitimos establecerlo a un string vacío
-    // para que el usuario pueda borrar el número completamente.
     if (newValue === '') {
       setQuantity('');
       setValidationError('La cantidad es requerida.');
@@ -51,25 +45,25 @@ export const RefillModal = ({ isOpen, onClose, contenedores, onRefill, productMa
     const newQuantity = parseInt(newValue, 10);
     const isFruta = selectedContainer?.tipo === 'fruta';
 
-    // Limitación estricta para 'fruta'
-    if (isFruta && newQuantity > 10) {
-      // No actualizamos el estado, manteniendo el valor anterior o 10.
-      setQuantity(10); // Opcional: auto-corregir a 10
-      setValidationError('La cantidad máxima para fruta es 10.');
+    // ==================== CAMBIOS CLAVE AQUÍ ====================
+    // Se ha añadido la validación para el valor mínimo (1) y mantenido la del máximo (5).
+    if (isFruta && newQuantity > 5) {
+      setQuantity(5);
+      setValidationError('La cantidad máxima para fruta es 5.');
+    } else if (isFruta && newQuantity < 1) { // <-- NUEVA VALIDACIÓN
+      setQuantity(1); // Auto-corrige a 1 si el valor es menor.
+      setValidationError('La cantidad mínima para fruta es 1.');
     } else {
       setQuantity(newQuantity);
       setValidationError('');
     }
+    // ========================================================
   };
-  // ========================================================
 
   if (!isOpen) return null;
 
   const isJugo = selectedContainer?.tipo === 'jugo';
-  const isFruta = selectedContainer?.tipo === 'fruta';
-  
-  // El botón debe estar deshabilitado si hay un error O si la cantidad es inválida (vacía)
-  const isSubmitDisabled = !!validationError || quantity === '';
+  const isSubmitDisabled = !!validationError || quantity === '' || quantity < 1;
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50 p-4 transition-opacity duration-300">
@@ -103,7 +97,6 @@ export const RefillModal = ({ isOpen, onClose, contenedores, onRefill, productMa
                 type="number"
                 id="quantity"
                 value={isJugo ? (selectedContainer?.capacidadMaxima || '') : quantity}
-                // ==================== USAMOS LA NUEVA FUNCIÓN ====================
                 onChange={handleQuantityChange}
                 disabled={isJugo}
                 className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2E6C43] focus:border-[#2E6C43] transition-all disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"

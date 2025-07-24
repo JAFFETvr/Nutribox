@@ -36,7 +36,7 @@ const LoginView = () => {
                         <div>
                             <label className="text-lg font-semibold text-[#386641]">Usuario</label>
                             <input
-                                type="tel"
+                                type="text"
                                 name="phone"
                                 value={phone}
                                 onChange={(e) => onChange('phone', e.target.value)}
