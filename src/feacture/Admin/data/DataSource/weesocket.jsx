@@ -1,5 +1,5 @@
 // La URL base del WebSocket, sin parámetros.
-const WEBSOCKET_BASE_URL = 'ws://34.201.177.84:8000/ws/sensores';
+const WEBSOCKET_BASE_URL = 'ws://miapi.sytes.net/ws/sensores';
 
 class SensorWebSocketDataSource {
   constructor() {

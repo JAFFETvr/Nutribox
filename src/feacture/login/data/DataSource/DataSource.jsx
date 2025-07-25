@@ -2,7 +2,7 @@
 export class LoginDataSource {
     async login(username, password) {
         
-        const response = await fetch('http://34.201.177.84:8000/api/v1/auth/login', {
+        const response = await fetch('https://miapi.sytes.net/api/v1/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

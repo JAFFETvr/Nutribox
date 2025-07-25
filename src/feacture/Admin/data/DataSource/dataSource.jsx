@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = 'http://34.201.177.84:8000/api/v1';
+const API_BASE_URL = 'https://miapi.sytes.net/api/v1';
 
 const api = axios.create({
   baseURL: API_BASE_URL

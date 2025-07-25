@@ -15,7 +15,7 @@ export class ProductAPI {
   }
 
   async fetchContainers() {
-    const response = await fetch('http://34.201.177.84:8000/api/v1/contenedores/');
+    const response = await fetch('https://miapi.sytes.net/api/v1/contenedores/');
     if (!response.ok) {
       throw new Error('Error al obtener los contenedores');
     }
@@ -23,7 +23,7 @@ export class ProductAPI {
   }
 
   async fetchProductById(productId) {
-    const response = await fetch(`http://34.201.177.84:8000/api/v1/productos/${productId}/`);
+    const response = await fetch(`https://miapi.sytes.net/api/v1/productos/${productId}/`);
     if (!response.ok) {
       throw new Error(`Error al obtener el producto con ID ${productId}`);
     }
@@ -31,7 +31,7 @@ export class ProductAPI {
   }
 
   async dispenseProduct(payload) {
-    const response = await fetch('http://34.201.177.84:8000/api/v1/contenedores/dispensar/', {
+    const response = await fetch('https://miapi.sytes.net/api/v1/contenedores/dispensar/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
